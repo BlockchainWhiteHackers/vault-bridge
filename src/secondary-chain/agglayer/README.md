@@ -6,23 +6,31 @@
 
 ## Compatibility
 
-### Agglayer Sovereign with Pessimistic Proof
+### Agglayer Sovereign
 
+- Supported VMs: EVM
+- Supported chains: Katana, Forknet
 - Custom Token: Available (Upgradeable Wrapped Token)
 - Native Converter: Available
+- WETH functionality: Available
 - Bridged USDC Standard: Available
 - Wrapped Token: Available (Upgradeable Wrapped Token)
+- Manual Converter: Coming soon
 
-### Agglayer without Pessimistic Proof
+### Agglayer Classic
 
+- Supported VMs: EVM
+- Supported chains: All Agglayer chains, except Katana, Forknet
 - Custom Token: N/A
 - Native Converter: N/A
+- WETH functionality: N/A
 - Bridged USDC Standard: N/A
 - Wrapped Token: Available (Wrapped Token)
+- Manual Converter: Coming soon
 
 ## Process
 
-### Agglayer Sovereign with Pessimistic Proof
+### Agglayer Sovereign
 
 1. Determine whether Custom Token, Native Converter, and/or Bridged USDC Standard* are needed. If none is needed, no action is required. *For Bridged USDC Standard, please refer to [`README.md`](./vbUSDC/bridged-usdc-standard/README.md).
 2. Bridge underlying token from Primary Chain and claim it on Secondary Chain.
@@ -32,7 +40,7 @@
 6. Deploy Custom Token implementation, upgrade Upgradeable Wrapped Token to Custom Token, and initialize it.
 7. Configure Native Converter in Migration Manager on Primary Chain.
 
-### Agglayer without Pessimistic Proof
+### Agglayer Classic
 
 No action required.
 
@@ -40,7 +48,7 @@ No action required.
 
 ### Agglayer Sovereign with Pessimistic Proof
 
-- "Local balance tree" in Agglayer Bridge contract prevents bridging out more tokens from a chain that have been bridged in to the chain by reverting onchain immediately.
+- "Local balance tree" in Agglayer Bridge contract prevents bridging out more tokens from a chain than have been bridged in to the chain by reverting onchain immediately.
 
 ### Agglayer without Pessimistic Proof
 

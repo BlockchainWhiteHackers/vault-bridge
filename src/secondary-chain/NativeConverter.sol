@@ -121,7 +121,7 @@ abstract contract NativeConverter is
         uint32 primaryChainAgglayerId_,
         uint256 nonMigratableBackingPercentage_,
         address migrationManager_
-    ) internal onlyInitializing {
+    ) internal onlyInitializing incrementsLocalInitializationCounter(1) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         // Check the inputs.
@@ -180,12 +180,7 @@ abstract contract NativeConverter is
     }
 
     // @remind Document (the entire function).
-    function __NativeConverter_init2()
-        internal
-        onlyInitializing
-        incrementsLocalInitializationCounter(1)
-        incrementsLocalInitializationCounter(2)
-    {
+    function __NativeConverter_init2() internal onlyInitializing incrementsLocalInitializationCounter(2) {
         NativeConverterStorage storage $ = _getNativeConverterStorage();
 
         $._underlyingTokenIsNotMintable = $.bridge.wrappedAddressIsNotMintable(address($.underlyingToken));
@@ -259,7 +254,7 @@ abstract contract NativeConverter is
         }
     }
 
-    // -----================= ::: NATIVE CONVERTER ::: =================-----
+    // -----================= ::: PSEUDO VAULT ::: =================-----
 
     /// @notice Deposit a specific amount of the underlying token and get Custom Token.
     /// @param assets The amount of the underlying token to convert to Custom Token.
@@ -543,8 +538,6 @@ abstract contract NativeConverter is
     // @remind Document (the entire function).
     function removeMigrationInProgress(uint256 mintedCustomToken) external onlyCustomToken nonReentrant {
         _removeMigrationInProgress(mintedCustomToken);
-
-        emit MigrationInProgressRemoved(mintedCustomToken);
     }
 
     // @remind Document (the entire function).

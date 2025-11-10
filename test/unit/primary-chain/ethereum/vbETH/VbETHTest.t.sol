@@ -10,6 +10,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {MockAgglayerBridge} from "test/utils/mocks/MockAgglayerBridge.sol";
 
+import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
+
 /**
  * @title VbEth Unit Tests
  * @notice Comprehensive unit tests for VbEth contract
@@ -36,6 +38,16 @@ contract VbETHTest is VbETHTestBase {
         // Verify
         assertGt(shares, 0, "Should receive shares for deposit");
         assertEq(vbETH.balanceOf(receiver), initialReceiverBalance + shares, "Receiver should get correct shares");
+    }
+
+    function test_Revert_depositGasTokenAndBridge_invalidNetworkID() public {
+        uint256 depositAmount = 1 ether;
+
+        // Deposit ETH
+        vm.deal(address(this), depositAmount);
+
+        vm.expectRevert(VaultBridgeToken.InvalidDestinationNetworkId.selector);
+        vbETH.depositGasTokenAndBridge{value: depositAmount}(address(this), 0, true);
     }
 
     function test_depositGasTokenAndBridge(address receiver, uint256 depositAmount) public {

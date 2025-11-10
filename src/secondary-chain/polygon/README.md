@@ -6,10 +6,14 @@
 
 ## Compatibility
 
+- Supported VMs: EVM
+- Supported chains: Polygon
 - Custom Token: Available (Custom Mapping)
-- ~~Native Converter~~
-- ~~Bridged USDC Standard~~
+- Native Converter: Not required
+- WETH functionality: TBD
+- Bridged USDC Standard: Not required
 - Wrapped Token: N/A
+- Manual Converter: Coming soon
 
 ## Process
 
@@ -18,7 +22,7 @@
 
 ## Protection
 
-- Bidirectional bridge.
+- Bidirectional, lock/mint bridge.
 
 ## Reference
 

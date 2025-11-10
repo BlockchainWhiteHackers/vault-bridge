@@ -13,31 +13,32 @@ import {ReentrancyGuardTransientUpgradeable} from
     "@openzeppelin-contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import {InitializationCounterUpgradeable} from "../../etc/InitializationCounterUpgradeable.sol";
 
-/// @title Generic OFT Adapter
+/// @title Non-Default OFT Adapter
 /// @author See https://github.com/agglayer/vault-bridge
-contract GenericOftAdapter is
+contract NonDefaultOftAdapter is
     OFTAdapterUpgradeable,
     ReentrancyGuardTransientUpgradeable,
     InitializationCounterUpgradeable
 {
-    // Error.
-    error InvalidOwner();
+    // Errors.
+    error InvalidToken();
+    error InvalidLzEndpoint();
 
     // -----================= ::: SETUP ::: =================-----
 
     constructor(address _token, address _lzEndpoint) OFTAdapterUpgradeable(_token, _lzEndpoint) {
         _disableInitializers();
+
+        require(_token != address(0), InvalidToken());
+        require(_lzEndpoint != address(0), InvalidLzEndpoint());
     }
 
     function reinitialize1(address _owner, address _delegate)
         external
+        locked
         reinitializer(_incrementGlobalInitializationCounter(1))
         nonReentrant
     {
-        // Check the inputs.
-        require(_owner != address(0), InvalidOwner());
-        require(_delegate != address(0), InvalidDelegate());
-
         __Ownable_init(_owner);
         __OFTAdapter_init(_delegate);
         __ReentrancyGuardTransient_init();
@@ -47,6 +48,7 @@ contract GenericOftAdapter is
     /// @dev How to add a new reinitializer:
     function reinitialize2()
         external
+        locked
         reinitializer(_incrementGlobalInitializationCounter(2))
         nonReentrant
     {}

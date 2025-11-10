@@ -7,6 +7,7 @@ pragma solidity 0.8.29;
 import {CustomToken} from "../CustomToken.sol";
 
 // @remind Document.
+/// @author See https://github.com/agglayer/vault-bridge
 abstract contract CustomTokenWormhole is CustomToken {
     // -----================= ::: MODIFIERS ::: =================-----
 
@@ -32,4 +33,8 @@ abstract contract CustomTokenWormhole is CustomToken {
 
     /// @inheritdoc CustomToken
     function _CUSTOM_TOKEN_IS_MINTABLE_BURNABLE() internal override {}
+
+    function setNativeConverter(address) external view virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
+        revert FunctionNotSupportedWithThisBridgeProvider();
+    }
 }

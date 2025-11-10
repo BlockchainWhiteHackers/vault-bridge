@@ -42,6 +42,15 @@ contract TestHarnessVaultBridgeToken is VaultBridgeToken {
         __VaultBridgeToken_init2();
     }
 
+    function reinitialize(bytes[] calldata reinitializeData) external {
+        bytes4[] memory reinitializeSelectors = new bytes4[](2);
+
+        reinitializeSelectors[0] = this.reinitialize1.selector;
+        reinitializeSelectors[1] = this.reinitialize2.selector;
+
+        _reinitialize(reinitializeSelectors, reinitializeData);
+    }
+
     /// @inheritdoc VaultBridgeToken
     function _VAULT_BRIDGE_TOKEN_INIT_2_COMPATIBLE() internal pure override {}
 }
@@ -82,13 +91,9 @@ abstract contract PrimaryChainBase is TestConstants {
     uint256 internal tokenDecimals;
     uint256 internal minimumReservePercentage;
     bytes internal tokenMetadata;
-    string internal version;
 
     /// @notice Configure Primary Chain infrastructure
     function deployPrimaryChainInfrastructure() internal virtual {
-        // Setup vault bridge version
-        version = VAULT_BRIDGE_PROTOCOL;
-
         // Set standard test addresses
         setupStandardTestAddresses();
 

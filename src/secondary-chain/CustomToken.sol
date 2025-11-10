@@ -56,6 +56,7 @@ abstract contract CustomToken is
     error InvalidBridge();
     error BridgeAlreadySet();
     error NativeConverterAlreadySet();
+    error FunctionNotSupportedWithThisBridgeProvider();
 
     // -----================= ::: SETUP ::: =================-----
 
@@ -69,7 +70,7 @@ abstract contract CustomToken is
         uint8 originalUnderlyingTokenDecimals_,
         address bridge_,
         address nativeConverter_
-    ) internal onlyInitializing {
+    ) internal onlyInitializing incrementsLocalInitializationCounter(1) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
 
         // Check the inputs.
@@ -100,12 +101,7 @@ abstract contract CustomToken is
     }
 
     // @remind Document (the entire function).
-    function __CustomToken_init2()
-        internal
-        onlyInitializing
-        incrementsLocalInitializationCounter(1)
-        incrementsLocalInitializationCounter(2)
-    {
+    function __CustomToken_init2() internal onlyInitializing incrementsLocalInitializationCounter(2) {
         // Empty function body.
     }
 
@@ -188,7 +184,7 @@ abstract contract CustomToken is
     }
 
     // @remind Document (the entire function).
-    function setNativeConverter(address nativeConverter_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setNativeConverter(address nativeConverter_) external virtual onlyRole(DEFAULT_ADMIN_ROLE) {
         CustomTokenStorage storage $ = _getCustomTokenStorage();
 
         require($.nativeConverter == address(0), NativeConverterAlreadySet());

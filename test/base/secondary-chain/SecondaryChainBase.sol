@@ -23,6 +23,8 @@ contract TestHarnessCustomToken is CustomToken {
         _disableInitializers();
     }
 
+    function reinitialize1() external {}
+
     function reinitialize2(
         address owner_,
         uint8 originalUnderlyingTokenDecimals_,
@@ -40,6 +42,16 @@ contract TestHarnessCustomToken is CustomToken {
         _incrementGlobalInitializationCounter(3);
 
         __CustomToken_init2();
+    }
+
+    function reinitialize(bytes[] calldata reinitializeData) external {
+        bytes4[] memory reinitializeSelectors = new bytes4[](3);
+
+        reinitializeSelectors[0] = this.reinitialize1.selector;
+        reinitializeSelectors[1] = this.reinitialize2.selector;
+        reinitializeSelectors[2] = this.reinitialize3.selector;
+
+        _reinitialize(reinitializeSelectors, reinitializeData);
     }
 
     /// @inheritdoc CustomToken
@@ -83,6 +95,16 @@ contract TestHarnessNativeConverter is NativeConverter {
         __NativeConverter_init2();
     }
 
+    // @remind Document (the entire function).
+    function reinitialize(bytes[] calldata reinitializeData) external {
+        bytes4[] memory reinitializeSelectors = new bytes4[](2);
+
+        reinitializeSelectors[0] = this.reinitialize1.selector;
+        reinitializeSelectors[1] = this.reinitialize2.selector;
+
+        _reinitialize(reinitializeSelectors, reinitializeData);
+    }
+
     /// @inheritdoc NativeConverter
     function _NATIVE_CONVERTER_INIT_2_COMPATIBLE() internal pure override {}
 
@@ -92,6 +114,36 @@ contract TestHarnessNativeConverter is NativeConverter {
 
     function _burnCustomToken(address from, uint256 amount) internal override {
         MockERC20Upgradeable(address(customToken())).burn(from, amount);
+    }
+
+    // Test helper functions to expose internal state
+    function getMigrationsInProgress(uint256 migratedBacking) external view returns (uint256 value) {
+        bytes32 storageSlot = hex"a14770e0debfe4b8406a01c33ee3a7bbe0acc66b3bde7c71854bf7d080a9c600";
+        // _migrationsInProgress is at offset 8 in the struct
+        bytes32 baseSlot;
+        assembly {
+            baseSlot := add(storageSlot, 8)
+        }
+        bytes32 mappingSlot = keccak256(abi.encode(migratedBacking, baseSlot));
+        assembly {
+            value := sload(mappingSlot)
+        }
+    }
+
+    function getMigrationsInProgressCount() external view returns (uint256 value) {
+        bytes32 storageSlot = hex"a14770e0debfe4b8406a01c33ee3a7bbe0acc66b3bde7c71854bf7d080a9c600";
+        // _migrationsInProgressCount is at offset 9 in the struct
+        assembly {
+            value := sload(add(storageSlot, 9))
+        }
+    }
+
+    function getTotalMigratedBackingInProgress() external view returns (uint256 value) {
+        bytes32 storageSlot = hex"a14770e0debfe4b8406a01c33ee3a7bbe0acc66b3bde7c71854bf7d080a9c600";
+        // _totalMigratedBackingInProgress is at offset 10 in the struct
+        assembly {
+            value := sload(add(storageSlot, 10))
+        }
     }
 }
 
@@ -120,13 +172,11 @@ abstract contract SecondaryChainBase is TestConstants {
     string internal customTokenSymbol;
     string internal underlyingTokenName;
     string internal underlyingTokenSymbol;
-    string internal version;
     uint256 internal maxNonMigratableBackingPercentage;
     uint256 internal maxNonMigratableGasBackingPercentage;
     uint32 internal primaryChainAgglayerId;
     uint8 internal customTokenDecimals;
     uint8 internal underlyingTokenDecimals;
-    bool internal wethFunctionalityEnabled;
 
     // ========= MOCK CONTRACTS =========
     MockAgglayerBridge internal mockAgglayerBridge;
@@ -136,9 +186,6 @@ abstract contract SecondaryChainBase is TestConstants {
     /// @notice Configure Secondary Chain infrastructure
     /// @dev This function sets up the basic infrastructure but doesn't deploy implementations
     function deploySecondaryChainInfrastructure() internal virtual {
-        // Setup vault bridge version
-        version = NATIVE_CONVERTER_PROTOCOL;
-
         // Set standard test addresses
         setupStandardTestAddresses();
 

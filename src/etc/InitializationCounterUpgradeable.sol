@@ -17,6 +17,7 @@ abstract contract InitializationCounterUpgradeable {
         uint64 _localInitializationCounter;
         mapping(Extension => uint64) _extensionInitializationCounter;
         uint64 globalInitializationCounter;
+        bool _unlocked;
     }
 
     /// @dev The storage slot at which Initialization Counter storage starts, following the EIP-7201 standard.
@@ -25,6 +26,7 @@ abstract contract InitializationCounterUpgradeable {
         hex"8d679e361eeeac0b879fa197c8b3bda76a3db4f57c9f89335c04a065390bbb00";
 
     // Errors.
+    error ReinitializersLocked();
     error IncorrectInitializationOrder(
         uint64 expectedGlobalInitializationCounterValue, uint64 actualGlobalInitializationCounterValue
     );
@@ -91,6 +93,13 @@ abstract contract InitializationCounterUpgradeable {
         return expectedNewGlobalInitializationCounterValue;
     }
 
+    // @remind Document (the entire modifier).
+    modifier locked() {
+        InitializationCounterUpgradeableStorage storage $ = _getInitializationCounterUpgradeableStorage();
+        require($._unlocked, ReinitializersLocked());
+        _;
+    }
+
     modifier incrementsExtensionInitializationCounter(
         uint64 requiredLocalInitializationCounterValue,
         Extension extension,
@@ -117,9 +126,6 @@ abstract contract InitializationCounterUpgradeable {
 
         $._extensionInitializationCounter[extension]++;
     }
-
-    // @todo Uncomment later (requires modifications of contracts and tests).
-    // function reinitialize(bytes[] calldata reinitializeData) external virtual;
 
     // @remind Document (the entire function).
     function _reinitialize(bytes4[] memory reinitializeSelectors, bytes[] calldata reinitializeData) internal {
@@ -157,7 +163,11 @@ abstract contract InitializationCounterUpgradeable {
 
             assert(selector != bytes4(0));
 
+            $._unlocked = true;
+
             (bool ok, bytes memory data) = implementation.delegatecall(reinitializeData[i]);
+
+            $._unlocked = false;
 
             if (!ok) {
                 assembly {

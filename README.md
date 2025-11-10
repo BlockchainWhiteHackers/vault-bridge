@@ -5,15 +5,11 @@
 **[⛓️ Deployments](#deployments)**
 **&nbsp;&nbsp; [📙 Documentation](#documentation)**
 **&nbsp;&nbsp; [🧭 Website](https://www.agglayer.dev/agglayer-vaultbridge)**
-**&nbsp;&nbsp; [🐈‍⬛ GitHub](https://github.com/agglayer/vault-bridge/)**
-**&nbsp;&nbsp; [🦙 DefiLllama](https://defillama.com/protocol/vault-bridge)**
+**&nbsp;&nbsp; [🦙 DefiLlama](https://defillama.com/protocol/vault-bridge)**
 
 </div>
 
 <br>
-
-> [!IMPORTANT]
-> You are viewing a development version of the codebase.
 
 ## Contents
 
@@ -88,6 +84,9 @@ Native Converter can be deployed on Secondary Chain to enable minting of vbToken
 
 ## Get Started
 
+> [!NOTE]
+> This section needs to be updated.
+
 Getting started should be easy as Vault Bridge Token contracts follow the ERC-4626 interface. Variants of the standard ERC-4626 functions include `depositAndBridge` and `claimAndRedeem`. Please see [Documentation](#documentation) for more information.
 
 If your chain is part of Agglayer, you can start using the official vbTokens immediately. Please note that you will get vbToken when bridging, not the underlying token, therefore activity should be incentivized in vbToken. You must participate in the revenue sharing program in order to receive yield. [Contact our team](https://info.polygon.technology/vaultbridge-intake-form) if interested in revenue sharing.
@@ -98,14 +97,17 @@ Full support for non-Agglayer chains, third-party bridges, as well as non-EVM ch
 
 ## Documentation
 
-- [General Documentation](https://docs.agglayer.dev/)
+> [!NOTE]
+> This section needs to be updated.
+
+- [General Documentation](https://docs.agglayer.dev/vault-bridge/get-started/overview/)
 - [Technical Reference](https://agglayer.github.io/vault-bridge/)
-- [Source Code](https://github.com/agglayer/vault-bridge/tree/main/src): In addition to General Documentation and Technical Reference, the Source Code is 100% documented and you are encouraged to take a look.
+- [Source Code](./src/): In addition to General Documentation and Technical Reference, the Source Code is 100% documented and you are encouraged to take a look.
   - Pay attention to the following bookmarks: `@note CAUTION!`, `@note IMPORTANT:`, `@note (ATTENTION)`.
 
 ## Deployments
 
-See [`broadcast/README.md`](https://github.com/agglayer/vault-bridge/blob/main/broadcast/README.md).
+See [`broadcast/README.md`](./broadcast/README.md).
 
 ## Usage
 
@@ -143,6 +145,6 @@ forge coverage --ir-minimum --report lcov && genhtml -o coverage lcov.info
 
 This codebase is licensed under Source Available License.
 
-See [`LICENSE-SOURCE-AVAILABLE`](https://github.com/agglayer/vault-bridge/blob/main/LICENSE-SOURCE-AVAILABLE).
+See [`LICENSE-SOURCE-AVAILABLE`](./LICENSE-SOURCE-AVAILABLE).
 
 Your use of this software constitutes acceptance of these license terms.

@@ -7,6 +7,16 @@ import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpg
 /// @notice An implementation of InitializationCounterUpgradeable for testing purposes
 /// @dev This contract exposes internal functionality of InitializationCounterUpgradeable for testing
 contract MockInitializationCounterUpgradeable is InitializationCounterUpgradeable {
+    /// @notice Funciton to simulate reinitialize1
+    function reinitialize1() external locked {
+        _incrementGlobalInitializationCounter(1);
+    }
+
+    // @notice Function to simulate reinitialize2
+    function reinitialize2() external locked {
+        _incrementGlobalInitializationCounter(2);
+    }
+
     /// @notice Expose the private _localInitializationCounter for testing
     function localInitializationCounter() external view returns (uint64) {
         InitializationCounterUpgradeableStorage storage $;
@@ -52,5 +62,15 @@ contract MockInitializationCounterUpgradeable is InitializationCounterUpgradeabl
     /// @notice Helper function to get storage slot for testing
     function getStorageSlot() external pure returns (bytes32) {
         return 0x8d679e361eeeac0b879fa197c8b3bda76a3db4f57c9f89335c04a065390bbb00;
+    }
+
+    /// @notice Public wrapper for _reinitialize to test reinitialization logic
+    function reinitialize(bytes4[] memory reinitializeSelectors, bytes[] calldata reinitializeData) external {
+        _reinitialize(reinitializeSelectors, reinitializeData);
+    }
+
+    /// @notice Mock reinitialize function that reverts
+    function reinitializeRevert() external pure {
+        revert("Mock revert");
     }
 }

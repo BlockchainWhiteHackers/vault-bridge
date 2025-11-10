@@ -8,6 +8,7 @@ pragma solidity 0.8.29;
 // Main functionality.
 import {CustomToken} from "../CustomToken.sol";
 
+/// @author See https://github.com/agglayer/vault-bridge
 abstract contract CustomTokenLayerZero is CustomToken {
     // -----================= ::: MODIFIERS ::: =================-----
 
@@ -49,4 +50,8 @@ abstract contract CustomTokenLayerZero is CustomToken {
 
     /// @inheritdoc CustomToken
     function _CUSTOM_TOKEN_IS_MINTABLE_BURNABLE() internal override {}
+
+    function setNativeConverter(address) external view virtual override onlyRole(DEFAULT_ADMIN_ROLE) {
+        revert FunctionNotSupportedWithThisBridgeProvider();
+    }
 }

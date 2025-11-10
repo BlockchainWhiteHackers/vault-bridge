@@ -11,6 +11,10 @@ import {
 // Core contracts
 import {GenericCustomTokenWormhole} from "src/secondary-chain/wormhole/GenericCustomTokenWormhole.sol";
 import {CustomToken} from "src/secondary-chain/CustomToken.sol";
+import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
+
+// OpenZeppelin
+import {IAccessControl} from "@openzeppelin-contracts/access/IAccessControl.sol";
 
 /// @dev GenericCustomTokenWormhole tests
 /// @notice Comprehensive tests for GenericCustomTokenWormhole which also cover CustomTokenWormhole functionality
@@ -28,18 +32,18 @@ contract GenericCustomTokenWormholeTest is GenericCustomTokenWormholeTestBase {
         uint8 originalUnderlyingTokenDecimals_,
         address nttManager_
     ) internal {
+        bytes[] memory reinitializeCallData = new bytes[](1);
+        reinitializeCallData[0] = abi.encodeCall(
+            GenericCustomTokenWormhole.reinitialize1,
+            (owner_, name_, symbol_, originalUnderlyingTokenDecimals_, nttManager_)
+        );
+
+        bytes memory genericCustomTokenWormholeInitData =
+            abi.encodeCall(GenericCustomTokenWormhole.reinitialize, (reinitializeCallData));
+
         vm.expectRevert(expectedError);
         TransparentUpgradeableProxy(
-            payable(
-                _proxify(
-                    genericCustomTokenWormholeImpl,
-                    proxyAdmin,
-                    abi.encodeCall(
-                        GenericCustomTokenWormhole.reinitialize1,
-                        (owner_, name_, symbol_, originalUnderlyingTokenDecimals_, nttManager_)
-                    )
-                )
-            )
+            payable(_proxify(genericCustomTokenWormholeImpl, proxyAdmin, genericCustomTokenWormholeInitData))
         );
     }
 
@@ -162,5 +166,20 @@ contract GenericCustomTokenWormholeTest is GenericCustomTokenWormholeTestBase {
         assertEq(genericCustomTokenWormhole.balanceOf(user2), 0);
         assertEq(genericCustomTokenWormhole.balanceOf(nttManager), 0);
         assertEq(genericCustomTokenWormhole.totalSupply(), amount1);
+    }
+
+    function test_setNativeConverter_revert() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessControl.AccessControlUnauthorizedAccount.selector,
+                address(this),
+                genericCustomTokenWormhole.DEFAULT_ADMIN_ROLE()
+            )
+        );
+        genericCustomTokenWormhole.setNativeConverter(address(1));
+
+        vm.prank(owner);
+        vm.expectRevert(CustomToken.FunctionNotSupportedWithThisBridgeProvider.selector);
+        genericCustomTokenWormhole.setNativeConverter(address(1));
     }
 }

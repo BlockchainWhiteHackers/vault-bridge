@@ -138,7 +138,11 @@ contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
             yieldVaultMaximumSlippagePercentage: YIELD_VAULT_ALLOWED_SLIPPAGE,
             vaultBridgeTokenPart2: address(vbTokenPart2)
         });
-        bytes memory vbTokenInitData = abi.encodeCall(vbToken.reinitialize1, (initializer, initParams));
+        bytes[] memory reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] =
+            abi.encodeCall(GenericVaultBridgeToken.reinitialize1, (address(initializer), initParams));
+        reinitializeCallData[1] = abi.encodeCall(GenericVaultBridgeToken.reinitialize2, ());
+        bytes memory vbTokenInitData = abi.encodeCall(vbToken.reinitialize, (reinitializeCallData));
         vbToken = GenericVaultBridgeToken(payable(_proxify(address(vbToken), address(this), vbTokenInitData)));
         vbTokenPart2 = VaultBridgeTokenPart2(payable(address(vbToken)));
 
@@ -151,10 +155,14 @@ contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
         wrappedGasToken = new MockWETH();
 
         MigrationManager migrationManagerImpl = new MigrationManager();
-        bytes memory migrationManagerInitData = abi.encodeCall(MigrationManager.reinitialize1, (owner, LXLY_BRIDGE_X));
+
+        reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] = abi.encodeCall(MigrationManager.reinitialize1, (owner, LXLY_BRIDGE_X));
+        reinitializeCallData[1] = abi.encodeCall(MigrationManager.reinitialize2, (address(wrappedGasToken)));
+
+        bytes memory migrationManagerInitData = abi.encodeCall(MigrationManager.reinitialize, (reinitializeCallData));
         migrationManager =
             MigrationManager(payable(_proxify(address(migrationManagerImpl), address(this), migrationManagerInitData)));
-        migrationManager.reinitialize2(address(wrappedGasToken));
 
         vm.prank(owner);
         migrationManager.configureNativeConverters(
@@ -180,11 +188,16 @@ contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
         );
 
         GenericCustomToken genericCustomTokenImpl = new GenericCustomToken();
-        bytes memory initData = abi.encodeCall(
+        bytes[] memory initData = new bytes[](3);
+        initData[0] = abi.encodeCall(GenericCustomToken.reinitialize1, ());
+        initData[1] = abi.encodeCall(
             GenericCustomToken.reinitialize2, (owner, CUSTOM_TOKEN_DECIMALS, LXLY_BRIDGE_Y, nativeConverterAddr)
         );
-        bytes memory upgradeData =
-            abi.encodeCall(ITransparentUpgradeableProxy.upgradeToAndCall, (address(genericCustomTokenImpl), initData));
+        initData[2] = abi.encodeCall(GenericCustomToken.reinitialize3, ());
+        bytes memory upgradeData = abi.encodeCall(
+            ITransparentUpgradeableProxy.upgradeToAndCall,
+            (address(genericCustomTokenImpl), abi.encodeCall(GenericCustomToken.reinitialize, (initData)))
+        );
         vm.prank(_getAdmin(address(customTokenProxy)));
         (address(customTokenProxy).call(upgradeData));
         customToken = GenericCustomToken(address(customTokenProxy));
@@ -212,7 +225,8 @@ contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
 
         // deploy native converter
         nativeConverter = new GenericNativeConverter();
-        bytes memory nativeConverterInitData = abi.encodeCall(
+        bytes[] memory nativeConverterInitData = new bytes[](2);
+        nativeConverterInitData[0] = abi.encodeCall(
             GenericNativeConverter(nativeConverter).reinitialize1,
             (
                 owner,
@@ -224,8 +238,14 @@ contract AgglayerIntegrationTest is TestConstants, ZkEVMCommon {
                 address(migrationManager)
             )
         );
-        nativeConverter =
-            GenericNativeConverter(_proxify(address(nativeConverter), address(this), nativeConverterInitData));
+        nativeConverterInitData[1] = abi.encodeCall(GenericNativeConverter(nativeConverter).reinitialize2, ());
+        nativeConverter = GenericNativeConverter(
+            _proxify(
+                address(nativeConverter),
+                address(this),
+                abi.encodeCall(GenericNativeConverter.reinitialize, (nativeConverterInitData))
+            )
+        );
         assertEq(nativeConverterAddr, address(nativeConverter));
 
         //////////////////////////////////////////////////////////////

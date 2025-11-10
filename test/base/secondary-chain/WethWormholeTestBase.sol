@@ -30,7 +30,6 @@ abstract contract WethWormholeTestBase is SecondaryChainBase {
         customTokenName = "WETH Wormhole";
         customTokenSymbol = "wWETH";
         customTokenDecimals = 18;
-        wethFunctionalityEnabled = true;
 
         deploySecondaryChainInfrastructure();
         deployWethWormhole();
@@ -43,26 +42,16 @@ abstract contract WethWormholeTestBase is SecondaryChainBase {
     function deployWethWormhole() internal {
         wethWormholeImpl = address(new WethWormhole());
 
-        existingWethWormholeProxy = TransparentUpgradeableProxy(
-            payable(
-                _proxify(
-                    wethWormholeImpl,
-                    proxyAdmin,
-                    abi.encodeCall(
-                        WethWormhole.reinitialize1,
-                        (
-                            owner,
-                            customTokenName,
-                            customTokenSymbol,
-                            originalUnderlyingTokenDecimals,
-                            nttManager,
-                            gasTokenIsEth,
-                            gasTokenIsEth
-                        )
-                    )
-                )
-            )
+        bytes[] memory reinitializeCallData = new bytes[](1);
+        reinitializeCallData[0] = abi.encodeCall(
+            WethWormhole.reinitialize1,
+            (owner, customTokenName, customTokenSymbol, originalUnderlyingTokenDecimals, nttManager, gasTokenIsEth)
         );
+
+        bytes memory wethWormholeInitData = abi.encodeCall(WethWormhole.reinitialize, (reinitializeCallData));
+
+        existingWethWormholeProxy =
+            TransparentUpgradeableProxy(payable(_proxify(wethWormholeImpl, proxyAdmin, wethWormholeInitData)));
 
         wethWormhole = WethWormhole(payable(address(existingWethWormholeProxy)));
     }
@@ -84,6 +73,5 @@ abstract contract WethWormholeTestBase is SecondaryChainBase {
         assertTrue(wethWormhole.hasRole(wethWormhole.PAUSER_ROLE(), owner));
         assertEq(wethWormhole.totalSupply(), 0);
         assertFalse(wethWormhole.paused());
-        assertTrue(wethWormhole.wethFunctionalityEnabled());
     }
 }

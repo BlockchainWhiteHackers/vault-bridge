@@ -11,6 +11,8 @@ import {
 import {GenericCustomTokenPolygon} from "src/secondary-chain/polygon/GenericCustomTokenPolygon.sol";
 import {CustomToken} from "src/secondary-chain/CustomToken.sol";
 
+import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
+
 /// @dev GenericCustomTokenPolygon tests
 /// @notice Comprehensive tests for GenericCustomTokenPolygon which also cover CustomTokenPolygon functionality
 contract GenericCustomTokenPolygonTest is GenericCustomTokenPolygonTestBase {
@@ -27,17 +29,17 @@ contract GenericCustomTokenPolygonTest is GenericCustomTokenPolygonTestBase {
         uint8 decimals_,
         address childChainManager_
     ) internal {
+        bytes[] memory reinitializeCallData = new bytes[](1);
+        reinitializeCallData[0] = abi.encodeCall(
+            GenericCustomTokenPolygon.reinitialize1, (owner_, name_, symbol_, decimals_, childChainManager_)
+        );
+
+        bytes memory genericCustomTokenPolygonInitData =
+            abi.encodeCall(GenericCustomTokenPolygon.reinitialize, (reinitializeCallData));
+
         vm.expectRevert(expectedError);
-        TransparentUpgradeableProxy(
-            payable(
-                _proxify(
-                    genericCustomTokenPolygonImpl,
-                    proxyAdmin,
-                    abi.encodeCall(
-                        GenericCustomTokenPolygon.reinitialize1, (owner_, name_, symbol_, decimals_, childChainManager_)
-                    )
-                )
-            )
+        existingGenericCustomTokenPolygonProxy = TransparentUpgradeableProxy(
+            payable(_proxify(genericCustomTokenPolygonImpl, proxyAdmin, genericCustomTokenPolygonInitData))
         );
     }
 

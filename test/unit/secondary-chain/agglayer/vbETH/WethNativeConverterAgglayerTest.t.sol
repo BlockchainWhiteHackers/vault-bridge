@@ -5,7 +5,8 @@ pragma solidity ^0.8.29;
 import {
     WethAgglayer,
     WethNativeConverterAgglayerTestBase,
-    WethNativeConverterAgglayer
+    WethNativeConverterAgglayer,
+    TransparentUpgradeableProxy
 } from "test/base/secondary-chain/WethNativeConverterAgglayerTestBase.sol";
 
 // Core contracts
@@ -28,29 +29,14 @@ contract WethNativeConverterAgglayerTest is WethNativeConverterAgglayerTestBase 
     function test_initialize() public {
         vm.revertToState(stateBeforeInitialize);
 
-        bytes memory initData;
+        bytes[] memory reinitializeCallData = new bytes[](2);
 
-        initData = abi.encodeCall(
-            WethNativeConverterAgglayer.reinitialize1,
-            (
-                address(0),
-                address(customToken),
-                address(underlyingToken),
-                address(mockAgglayerBridge),
-                primaryChainAgglayerId,
-                maxNonMigratableBackingPercentage,
-                migrationManager,
-                maxNonMigratableGasBackingPercentage
-            )
-        );
         vm.expectRevert(NativeConverter.InvalidOwner.selector);
-        WethNativeConverterAgglayer(payable(_proxify(address(nativeConverterImpl), proxyAdmin, initData)));
-
-        initData = abi.encodeCall(
+        reinitializeCallData[0] = abi.encodeCall(
             WethNativeConverterAgglayer.reinitialize1,
             (
-                owner,
                 address(0),
+                address(customToken),
                 address(underlyingToken),
                 address(mockAgglayerBridge),
                 primaryChainAgglayerId,
@@ -59,10 +45,37 @@ contract WethNativeConverterAgglayerTest is WethNativeConverterAgglayerTestBase 
                 maxNonMigratableGasBackingPercentage
             )
         );
+        reinitializeCallData[1] = abi.encodeCall(WethNativeConverterAgglayer.reinitialize2, ());
+
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(WethNativeConverterAgglayer.reinitialize, (reinitializeCallData))
+        );
+
         vm.expectRevert(NativeConverter.InvalidCustomToken.selector);
-        WethNativeConverterAgglayer(payable(_proxify(address(nativeConverterImpl), proxyAdmin, initData)));
+        reinitializeCallData[0] = abi.encodeCall(
+            WethNativeConverterAgglayer.reinitialize1,
+            (
+                owner,
+                address(0),
+                address(underlyingToken),
+                address(mockAgglayerBridge),
+                primaryChainAgglayerId,
+                maxNonMigratableBackingPercentage,
+                migrationManager,
+                maxNonMigratableGasBackingPercentage
+            )
+        );
 
-        initData = abi.encodeCall(
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(WethNativeConverterAgglayer.reinitialize, (reinitializeCallData))
+        );
+
+        vm.expectRevert(NativeConverter.InvalidUnderlyingToken.selector);
+        reinitializeCallData[0] = abi.encodeCall(
             WethNativeConverterAgglayer.reinitialize1,
             (
                 owner,
@@ -75,10 +88,15 @@ contract WethNativeConverterAgglayerTest is WethNativeConverterAgglayerTestBase 
                 maxNonMigratableGasBackingPercentage
             )
         );
-        vm.expectRevert(NativeConverter.InvalidUnderlyingToken.selector);
-        WethNativeConverterAgglayer(payable(_proxify(address(nativeConverterImpl), proxyAdmin, initData)));
 
-        initData = abi.encodeCall(
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(WethNativeConverterAgglayer.reinitialize, (reinitializeCallData))
+        );
+
+        vm.expectRevert(NativeConverter.InvalidAgglayerBridge.selector);
+        reinitializeCallData[0] = abi.encodeCall(
             WethNativeConverterAgglayer.reinitialize1,
             (
                 owner,
@@ -91,10 +109,15 @@ contract WethNativeConverterAgglayerTest is WethNativeConverterAgglayerTestBase 
                 maxNonMigratableGasBackingPercentage
             )
         );
-        vm.expectRevert(NativeConverter.InvalidAgglayerBridge.selector);
-        WethNativeConverterAgglayer(payable(_proxify(address(nativeConverterImpl), proxyAdmin, initData)));
 
-        initData = abi.encodeCall(
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(WethNativeConverterAgglayer.reinitialize, (reinitializeCallData))
+        );
+
+        vm.expectRevert(NativeConverter.InvalidAgglayerBridge.selector);
+        reinitializeCallData[0] = abi.encodeCall(
             WethNativeConverterAgglayer.reinitialize1,
             (
                 owner,
@@ -107,16 +130,20 @@ contract WethNativeConverterAgglayerTest is WethNativeConverterAgglayerTestBase 
                 maxNonMigratableGasBackingPercentage
             )
         );
-        vm.expectRevert(NativeConverter.InvalidAgglayerBridge.selector);
-        WethNativeConverterAgglayer(payable(_proxify(address(nativeConverterImpl), proxyAdmin, initData)));
 
-        MockERC20 dummyToken = new MockERC20("Dummy Token", "DT", 6);
-        initData = abi.encodeCall(
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(WethNativeConverterAgglayer.reinitialize, (reinitializeCallData))
+        );
+
+        vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
+        reinitializeCallData[0] = abi.encodeCall(
             WethNativeConverterAgglayer.reinitialize1,
             (
                 owner,
                 address(customToken),
-                address(dummyToken),
+                address(underlyingToken),
                 address(mockAgglayerBridge),
                 primaryChainAgglayerId,
                 1e19,
@@ -124,10 +151,15 @@ contract WethNativeConverterAgglayerTest is WethNativeConverterAgglayerTestBase 
                 maxNonMigratableGasBackingPercentage
             )
         );
-        vm.expectRevert(abi.encodeWithSelector(NativeConverter.InvalidNonMigratableBackingPercentage.selector));
-        WethNativeConverterAgglayer(payable(_proxify(address(nativeConverterImpl), proxyAdmin, initData)));
 
-        initData = abi.encodeCall(
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(WethNativeConverterAgglayer.reinitialize, (reinitializeCallData))
+        );
+
+        vm.expectRevert(NativeConverter.InvalidMigrationManager.selector);
+        reinitializeCallData[0] = abi.encodeCall(
             WethNativeConverterAgglayer.reinitialize1,
             (
                 owner,
@@ -140,10 +172,15 @@ contract WethNativeConverterAgglayerTest is WethNativeConverterAgglayerTestBase 
                 maxNonMigratableGasBackingPercentage
             )
         );
-        vm.expectRevert(NativeConverter.InvalidMigrationManager.selector);
-        WethNativeConverterAgglayer(payable(_proxify(address(nativeConverterImpl), proxyAdmin, initData)));
 
-        initData = abi.encodeCall(
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(WethNativeConverterAgglayer.reinitialize, (reinitializeCallData))
+        );
+
+        vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
+        reinitializeCallData[0] = abi.encodeCall(
             WethNativeConverterAgglayer.reinitialize1,
             (
                 owner,
@@ -156,8 +193,12 @@ contract WethNativeConverterAgglayerTest is WethNativeConverterAgglayerTestBase 
                 1e19
             )
         );
-        vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
-        WethNativeConverterAgglayer(payable(_proxify(address(nativeConverterImpl), proxyAdmin, initData)));
+
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(WethNativeConverterAgglayer.reinitialize, (reinitializeCallData))
+        );
     }
 
     function test_migrateGasBackingToPrimaryChain() public {
@@ -249,7 +290,12 @@ contract WethNativeConverterAgglayerTest is WethNativeConverterAgglayerTestBase 
 
     function _deployWethNativeConverterAgglayer() internal {
         nativeConverter = new WethNativeConverterAgglayer();
-        bytes memory initData = abi.encodeCall(
+
+        nativeConverter =
+            WethNativeConverterAgglayer(payable(_proxify(address(nativeConverter), address(this), bytes(""))));
+
+        bytes[] memory reinitializeCallData = new bytes[](2);
+        reinitializeCallData[0] = abi.encodeCall(
             WethNativeConverterAgglayer.reinitialize1,
             (
                 owner,
@@ -262,7 +308,9 @@ contract WethNativeConverterAgglayerTest is WethNativeConverterAgglayerTestBase 
                 maxNonMigratableGasBackingPercentage
             )
         );
-        nativeConverter =
-            WethNativeConverterAgglayer(payable(_proxify(address(nativeConverter), address(this), initData)));
+        reinitializeCallData[1] = abi.encodeCall(WethNativeConverterAgglayer.reinitialize2, ());
+
+        vm.prank(address(nativeConverter));
+        nativeConverter.reinitialize(reinitializeCallData);
     }
 }

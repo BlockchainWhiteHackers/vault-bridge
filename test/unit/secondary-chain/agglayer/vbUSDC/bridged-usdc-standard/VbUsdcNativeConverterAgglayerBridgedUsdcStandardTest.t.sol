@@ -2,8 +2,10 @@
 pragma solidity ^0.8.29;
 
 // Test Base
-import {VbUsdcNativeConverterAgglayerBridgedUsdcStandardTestBase} from
-    "test/base/secondary-chain/VbUsdcNativeConverterAgglayerBridgedUsdcStandardTestBase.sol";
+import {
+    VbUsdcNativeConverterAgglayerBridgedUsdcStandardTestBase,
+    TransparentUpgradeableProxy
+} from "test/base/secondary-chain/VbUsdcNativeConverterAgglayerBridgedUsdcStandardTestBase.sol";
 
 // Core contracts
 import {NativeConverter} from "src/secondary-chain/NativeConverter.sol";
@@ -24,26 +26,35 @@ contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTest is
     function test_initialize() public {
         vm.revertToState(stateBeforeInitialize);
 
-        bytes memory initData;
+        bytes[] memory reinitializeCallData = new bytes[](2);
 
-        // Test invalid owner
-        initData = abi.encodeCall(
-            VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
-            (
-                address(0),
-                address(customToken),
-                address(underlyingToken),
-                address(mockAgglayerBridge),
-                primaryChainAgglayerId,
-                maxNonMigratableBackingPercentage,
-                migrationManager
-            )
-        );
         vm.expectRevert(NativeConverter.InvalidOwner.selector);
-        VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(_proxify(nativeConverterImpl, proxyAdmin, initData)));
+        reinitializeCallData[0] = abi.encodeCall(
+            VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
+            (
+                address(0),
+                address(customToken),
+                address(underlyingToken),
+                address(mockAgglayerBridge),
+                primaryChainAgglayerId,
+                maxNonMigratableBackingPercentage,
+                migrationManager
+            )
+        );
+        reinitializeCallData[1] =
+            abi.encodeCall(VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize2, ());
 
-        // Test invalid custom token
-        initData = abi.encodeCall(
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(
+                VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize,
+                (reinitializeCallData)
+            )
+        );
+
+        vm.expectRevert(NativeConverter.InvalidCustomToken.selector);
+        reinitializeCallData[0] = abi.encodeCall(
             VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
             (
                 owner,
@@ -55,11 +66,18 @@ contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTest is
                 migrationManager
             )
         );
-        vm.expectRevert(NativeConverter.InvalidCustomToken.selector);
-        VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(_proxify(nativeConverterImpl, proxyAdmin, initData)));
 
-        // Test invalid underlying token
-        initData = abi.encodeCall(
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(
+                VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize,
+                (reinitializeCallData)
+            )
+        );
+
+        vm.expectRevert(NativeConverter.InvalidUnderlyingToken.selector);
+        reinitializeCallData[0] = abi.encodeCall(
             VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
             (
                 owner,
@@ -71,11 +89,18 @@ contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTest is
                 migrationManager
             )
         );
-        vm.expectRevert(NativeConverter.InvalidUnderlyingToken.selector);
-        VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(_proxify(nativeConverterImpl, proxyAdmin, initData)));
 
-        // Test invalid agglayer bridge
-        initData = abi.encodeCall(
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(
+                VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize,
+                (reinitializeCallData)
+            )
+        );
+
+        vm.expectRevert(NativeConverter.InvalidAgglayerBridge.selector);
+        reinitializeCallData[0] = abi.encodeCall(
             VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
             (
                 owner,
@@ -87,27 +112,41 @@ contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTest is
                 migrationManager
             )
         );
-        vm.expectRevert(NativeConverter.InvalidAgglayerBridge.selector);
-        VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(_proxify(nativeConverterImpl, proxyAdmin, initData)));
 
-        // Test invalid primary chain agglayer ID (0 is invalid)
-        initData = abi.encodeCall(
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(
+                VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize,
+                (reinitializeCallData)
+            )
+        );
+
+        vm.expectRevert(NativeConverter.InvalidAgglayerBridge.selector);
+        reinitializeCallData[0] = abi.encodeCall(
             VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
             (
                 owner,
                 address(customToken),
                 address(underlyingToken),
                 address(mockAgglayerBridge),
-                1, // invalid primary chain agglayer ID
+                NETWORK_ID_L2, // invalid primary chain agglayer ID
                 maxNonMigratableBackingPercentage,
                 migrationManager
             )
         );
-        vm.expectRevert(NativeConverter.InvalidAgglayerBridge.selector);
-        VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(_proxify(nativeConverterImpl, proxyAdmin, initData)));
 
-        // Test invalid non-migratable backing percentage (must be <= 100%)
-        initData = abi.encodeCall(
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(
+                VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize,
+                (reinitializeCallData)
+            )
+        );
+
+        vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
+        reinitializeCallData[0] = abi.encodeCall(
             VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
             (
                 owner,
@@ -119,8 +158,38 @@ contract VbUsdcNativeConverterAgglayerBridgedUsdcStandardTest is
                 migrationManager
             )
         );
-        vm.expectRevert(NativeConverter.InvalidNonMigratableBackingPercentage.selector);
-        VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(_proxify(nativeConverterImpl, proxyAdmin, initData)));
+
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(
+                VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize,
+                (reinitializeCallData)
+            )
+        );
+
+        vm.expectRevert(NativeConverter.InvalidMigrationManager.selector);
+        reinitializeCallData[0] = abi.encodeCall(
+            VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize1,
+            (
+                owner,
+                address(customToken),
+                address(underlyingToken),
+                address(mockAgglayerBridge),
+                primaryChainAgglayerId,
+                maxNonMigratableBackingPercentage,
+                address(0) // invalid migration manager
+            )
+        );
+
+        new TransparentUpgradeableProxy(
+            nativeConverterImpl,
+            proxyAdmin,
+            abi.encodeCall(
+                VbUsdcNativeConverterAgglayerBridgedUsdcStandard(payable(address(0))).reinitialize,
+                (reinitializeCallData)
+            )
+        );
     }
 
     function test_burnCustomToken_viaDeconvert() public {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-PolygonLabs-Source-Available
-// Vault Bridge (last updated v1.0.0) (secondary-chain/agglayer/vbETH/WethNativeConverterAgglayer.sol)
+// Vault Bridge (last updated v1.1.0) (secondary-chain/agglayer/vbETH/WethNativeConverterAgglayer.sol)
 
 pragma solidity 0.8.29;
 
@@ -52,7 +52,7 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
         uint256 nonMigratableBackingPercentage_,
         address migrationManager_,
         uint256 nonMigratableGasBackingPercentage_
-    ) external reinitializer(1) {
+    ) external locked reinitializer(_incrementGlobalInitializationCounter(1)) nonReentrant {
         WETHNativeConverterStorage storage $ = _getWethNativeConverterAgglayerStorage();
 
         // Initialize the base implementation.
@@ -73,10 +73,7 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
         $.nonMigratableGasBackingPercentage = nonMigratableGasBackingPercentage_;
     }
 
-    function reinitialize2() external nonReentrant reinitializer(2) {
-        _incrementGlobalInitializationCounter(1);
-        _incrementGlobalInitializationCounter(2);
-
+    function reinitialize2() external locked reinitializer(_incrementGlobalInitializationCounter(2)) nonReentrant {
         __NativeConverter_init2();
     }
 
@@ -84,6 +81,7 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
     /// @dev How to add a new reinitializer:
     function reinitialize3()
         external
+        locked
         reinitializer(_incrementGlobalInitializationCounter(3))
         nonReentrant
     {}
@@ -152,7 +150,7 @@ contract WethNativeConverterAgglayer is NativeConverterAgglayer {
         uint256 amountOfCustomToken = _convertToShares(amount);
 
         // Taking agglayerBridge's gas balance here
-        weth.bridgeBackingToPrimaryChain(amount);
+        weth.moveGasBackingToNativeConverter(amount);
         bridge().bridgeAsset{value: amount}(
             primaryChainAgglayerId(), address(migrationManager()), amount, address(0), true, ""
         );

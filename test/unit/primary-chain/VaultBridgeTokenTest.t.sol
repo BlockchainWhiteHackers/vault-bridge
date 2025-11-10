@@ -17,6 +17,8 @@ import {IAgglayerBridge as _IAgglayerBridge} from "test/interfaces/IAgglayerBrid
 import {MockAgglayerBridge} from "test/utils/mocks/MockAgglayerBridge.sol";
 import {MockVault} from "test/utils/mocks/MockVault.sol";
 
+import {InitializationCounterUpgradeable} from "src/etc/InitializationCounterUpgradeable.sol";
+
 /// @dev Tests for VaultBridgeToken and VaultBridgeTokenPart2
 contract VaultBridgeTokenTest is VaultBridgeTokenTestBase {
     using SafeERC20 for IERC20;
